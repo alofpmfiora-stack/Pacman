@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Law & Order: Pacman</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="game-container">
+        <div id="hud">
+            <div class="hud-item title">LAW & ORDER</div>
+            <div class="hud-item">SCORE: <span id="score">0</span></div>
+            <div class="hud-item">HIGH SCORE: <span id="high-score">0</span></div>
+            <div class="hud-item">LIVES: <span id="lives">★★★</span></div>
+        </div>
+        
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="560" height="620"></canvas>
+            
+            <div id="start-screen" class="overlay active">
+                <h1 class="neon-title"><span class="blue">LAW</span> & <span class="red">ORDER</span><br>PACMAN</h1>
+                <p>Controle a Viatura (Setas / WASD)</p>
+                <p>Persiga os Ladrões! Colete Evidências!</p>
+                <p>Giroflex permite prender os ladrões!</p>
+                <button id="start-btn" class="neon-btn">START GAME</button>
+            </div>
+
+            <div id="game-over-screen" class="overlay">
+                <h1 class="neon-title red">GAME OVER</h1>
+                <p>Pontuação Final: <span id="final-score">0</span></p>
+                <button id="restart-btn" class="neon-btn">RESTART</button>
+            </div>
+            
+             <div id="win-screen" class="overlay">
+                <h1 class="neon-title blue">LEVEL CLEARED!</h1>
+                <button id="next-level-btn" class="neon-btn">NEXT LEVEL</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
