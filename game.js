@@ -144,9 +144,7 @@ class Player extends Entity {
             let wrapCheckC = (checkC + COLS) % COLS;
             let checkCell = map[checkR] ? map[checkR][wrapCheckC] : undefined;
             if (checkCell !== undefined) {
-                if (powerModeTimer > 0) {
-                    canMoveNext = true; // Livre circulação
-                } else if (checkCell !== 1 && checkCell !== 4) {
+                if (checkCell !== 1 && checkCell !== 4) {
                     canMoveNext = true;
                 }
             }
@@ -165,9 +163,7 @@ class Player extends Entity {
                 let currCell = map[currCheckR] ? map[currCheckR][wrapCurrCheckC] : undefined;
                 let canMoveCurr = false;
                 if (currCell !== undefined) {
-                    if (powerModeTimer > 0) {
-                        canMoveCurr = true; // Livre circulação
-                    } else if (currCell !== 1 && currCell !== 4) {
+                    if (currCell !== 1 && currCell !== 4) {
                         canMoveCurr = true;
                     }
                 }
@@ -541,15 +537,6 @@ function gameLoop(timestamp) {
 
     player.update(dt);
     
-    // Se o Giroflex desligar e a viatura estiver dentro de um prédio (parede), ocorre o acidente.
-    if (powerModeTimer <= 0) {
-        let wrapC = (player.c + COLS) % COLS;
-        if (map[player.r] && map[player.r][wrapC] === 1) {
-            handleDeath();
-            return; // Previne que a lógica de colisão do mesmo frame rode novamente
-        }
-    }
-
     ghosts.forEach(g => g.update(dt));
 
     // Collision detection
