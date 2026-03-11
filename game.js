@@ -45,9 +45,11 @@ let dotsTotal = 0;
 let score = 0;
 let highScore = 0;
 let lives = 3;
+let currentLevel = 1;
 let gameOver = false;
 let gameWon = false;
 let powerModeTimer = 0;
+let floatingTexts = [];
 
 let animationId;
 let lastTime = 0;
@@ -267,7 +269,8 @@ class Player extends Entity {
 class Ghost extends Entity {
     constructor(c, r, color, type) {
         super(c, r, type === 4 ? 2.2 : 2.0); // Fleeing thief is slightly faster
-
+        this.spawnC = c;
+        this.spawnR = r;
         this.color = color;
         this.type = type; // 0,1,2,3
         this.state = 'scatter'; // scatter, chase, frightened, eaten
@@ -427,7 +430,8 @@ class Ghost extends Entity {
     }
 }
 
-function initGame() {
+function initGame(keepScore = false) {
+    if (animationId) cancelAnimationFrame(animationId);
     initMap();
     player = new Player();
     ghosts = [
@@ -437,7 +441,15 @@ function initGame() {
         new Ghost(14, 14, GHOST_COLORS[3], 3), // Clyde
         new Ghost(13, 11, GHOST_COLORS[4], 4)  // Fleeing Thief (Always runs away, Green)
     ];
-    score = 0;
+
+    // A cada nível passado, spawna ladrões extras baseados na Dificuldade/Level!
+    for(let i = 1; i < currentLevel; i++) {
+        let type = i % 4; // Reaproveita os comportamentos de IA (0 a 3)
+        ghosts.push(new Ghost(13, 13, GHOST_COLORS[type], type));
+    }
+
+    floatingTexts = [];
+    if (!keepScore) score = 0;
     updateHUD();
     gameWon = false;
     gameOver = false;
@@ -541,25 +553,26 @@ function gameLoop(timestamp) {
     ghosts.forEach(g => g.update(dt));
 
     // Collision detection
-    ghosts.forEach(g => {
+    for (let i = ghosts.length - 1; i >= 0; i--) {
+        let g = ghosts[i];
         let dx = g.x - player.x;
         let dy = g.y - player.y;
         let dist = Math.sqrt(dx*dx + dy*dy);
         
         if (dist < TILE_SIZE - 2) {
-            if (g.state === 'frightened' || (g.type === 4 && g.state !== 'eaten')) {
-                if (g.state !== 'eaten') {
-                    g.state = 'eaten';
-                    score += (g.type === 4) ? 500 : 200; // Adds 500 points if it's the fleeing thief
-                }
-            } else if (g.state !== 'eaten') {
+            // Se o poder (Giroflex) está ativo OU é o ladrão de fuga
+            if (g.state === 'frightened' || g.type === 4) {
+                score += (g.type === 4) ? 500 : 200; // Adds points
+                floatingTexts.push({ x: g.x, y: g.y, life: 1.5 });
+                ghosts.splice(i, 1); // Remove permanentemente do mapa (prendeu)
+            } else {
                  handleDeath();
             }
         }
-    });
+    }
 
-    // Win condition
-    if (dotsTotal === 0) {
+    // Win condition: Prendeu TODOS os Ladrões!
+    if (ghosts.length === 0) {
         gameWon = true;
         document.getElementById('win-screen').classList.add('active');
         document.getElementById('score').innerText = score;
@@ -568,6 +581,26 @@ function gameLoop(timestamp) {
     drawMap();
     player.draw(ctx);
     ghosts.forEach(g => g.draw(ctx));
+    
+    // Anima e desenha o texto flutuante do "SACO!"
+    for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        let ft = floatingTexts[i];
+        ft.y -= dt * 30; // Flutua pra cima
+        ft.life -= dt;
+        if (ft.life <= 0) {
+            floatingTexts.splice(i, 1);
+        } else {
+            ctx.save();
+            ctx.globalAlpha = Math.max(0, ft.life / 1.5);
+            ctx.fillStyle = '#ffea00';
+            ctx.font = '10px "Press Start 2P"';
+            ctx.textAlign = 'center';
+            // Algumas fontes/cenarios podem precisar de fallback para o emoji
+            ctx.fillText('SACO! 💀', ft.x, ft.y);
+            ctx.restore();
+        }
+    }
+
     updateHUD();
 
     if (!gameOver && !gameWon) {
@@ -591,15 +624,9 @@ function handleDeath() {
         player.moving = false;
         nextDir = {x:0, y:0};
 
-        ghosts[0].c = 13; ghosts[0].r = 13;
-        ghosts[1].c = 14; ghosts[1].r = 13;
-        ghosts[2].c = 13; ghosts[2].r = 14;
-        ghosts[3].c = 14; ghosts[3].r = 14;
-        if (ghosts[4]) {
-            ghosts[4].c = 13; ghosts[4].r = 11;
-        }
-
         ghosts.forEach(g => {
+            g.c = g.spawnC;
+            g.r = g.spawnR;
             g.x = g.c * TILE_SIZE + TILE_SIZE/2;
             g.y = g.r * TILE_SIZE + TILE_SIZE/2;
             g.moving = false;
@@ -631,17 +658,19 @@ window.addEventListener('keydown', (e) => {
 document.getElementById('start-btn').addEventListener('click', () => {
     document.getElementById('start-screen').classList.remove('active');
     lives = 3;
-    initGame();
+    currentLevel = 1;
+    initGame(false);
 });
 
 document.getElementById('restart-btn').addEventListener('click', () => {
     document.getElementById('game-over-screen').classList.remove('active');
     lives = 3;
-    initGame();
+    currentLevel = 1;
+    initGame(false);
 });
 
 document.getElementById('next-level-btn').addEventListener('click', () => {
     document.getElementById('win-screen').classList.remove('active');
-    // Keep score, keep lives, just restart map
-    initGame();
+    currentLevel++; // Incrementa o nível!! Aumenta os ladrões!
+    initGame(true); // Mantém a pontuação (score) real do player
 });
