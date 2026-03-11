@@ -123,6 +123,9 @@ class Entity {
     }
 }
 
+const playerImg = new Image();
+playerImg.src = 'assets/viatura.png';
+
 class Player extends Entity {
     constructor() {
         super(14, 23, 2.5);
@@ -208,12 +211,18 @@ class Player extends Entity {
         ctx.translate(this.x, this.y);
         ctx.rotate(this.angle);
         
-        // Viatura body
-        ctx.fillStyle = '#111';
-        ctx.fillRect(-8, -6, 16, 12);
-        
-        ctx.fillStyle = '#eee';
-        ctx.fillRect(-6, -4, 12, 8);
+        if (playerImg.complete && playerImg.naturalWidth !== 0) {
+            // Se a imagem carregou, desenha a imagem realizada
+            // Ajustamos o tamanho para caber no bloco do labirinto (aprox 24x12)
+            ctx.drawImage(playerImg, -14, -8, 28, 16);
+        } else {
+            // Viatura body (Fallback)
+            ctx.fillStyle = '#111';
+            ctx.fillRect(-8, -6, 16, 12);
+            
+            ctx.fillStyle = '#eee';
+            ctx.fillRect(-6, -4, 12, 8);
+        }
         
         // Police lights
         sirenTimer += 0.1;
@@ -230,23 +239,26 @@ class Player extends Entity {
             blueColor = !sirenFlash ? '#00f' : '#006';
         }
 
+        // Desenhamos a luz da sirene no teto do carro
         ctx.fillStyle = redColor;
         ctx.fillRect(-2, -3, 4, 3);
         ctx.fillStyle = blueColor;
         ctx.fillRect(-2, 0, 4, 3);
         
-        // headlights
-        ctx.fillStyle = 'rgba(255, 255, 200, 0.5)';
-        ctx.beginPath();
-        ctx.moveTo(8, -4);
-        ctx.lineTo(24, -12);
-        ctx.lineTo(24, 0);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.moveTo(8, 4);
-        ctx.lineTo(24, 0);
-        ctx.lineTo(24, 12);
-        ctx.fill();
+        if (!playerImg.complete || playerImg.naturalWidth === 0) {
+            // headlights (apenas no fallback geométrico para não sobrepor mal na imagem)
+            ctx.fillStyle = 'rgba(255, 255, 200, 0.5)';
+            ctx.beginPath();
+            ctx.moveTo(8, -4);
+            ctx.lineTo(24, -12);
+            ctx.lineTo(24, 0);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(8, 4);
+            ctx.lineTo(24, 0);
+            ctx.lineTo(24, 12);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
